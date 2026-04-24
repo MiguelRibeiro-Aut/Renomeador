@@ -21,9 +21,10 @@ class Program
         while (true)
         {
             Console.WriteLine("\n=== MENU PRINCIPAL ===");
-            Console.WriteLine("1. Renomear arquivos");
-            Console.WriteLine("2. Desfazer renomeamento");
-            Console.WriteLine("3. Sair");
+            Console.WriteLine("1. Mostrar Arquivos");
+            Console.WriteLine("2. Renomear Arquivos");
+            Console.WriteLine("3. Desfazer Renomeamento");
+            Console.WriteLine("4. Sair");
             Console.Write("Escolha uma opcao: ");
 
             string opcao = Console.ReadLine()?.Trim() ?? "";
@@ -31,12 +32,15 @@ class Program
             switch (opcao)
             {
                 case "1":
-                    RenomearArquivos(pasta);
+                    MostrarArquivos(pasta);
                     break;
                 case "2":
-                    DesfazerRenomeamento(pasta);
+                    RenomearArquivos(pasta);
                     break;
                 case "3":
+                    DesfazerRenomeamento(pasta);
+                    break;
+                case "4":
                     return;
                 default:
                     Console.WriteLine("Opcao invalida!");
@@ -45,10 +49,40 @@ class Program
         }
     }
 
+
+    static void MostrarArquivos(string pasta)
+    {
+        var arquivos = Directory.GetFiles(pasta)
+                            .Where(f => Path.GetFileName(f) != LOG_FILE)
+            .OrderBy(f => {
+                string nome = Path.GetFileNameWithoutExtension(f); var match = System.Text.RegularExpressions.Regex.Match(nome, @"\d+");
+                return match.Success ? int.Parse(match.Value) : 0;
+            })
+            .ToArray();
+
+        if (arquivos.Length == 0)
+        {
+            Console.WriteLine("Nenhum arquivo encontrado na pasta!");
+            return;
+        }
+
+        int contador = 0;
+        for (int i = 0; i < arquivos.Length; i++)
+        {
+            string nomeOriginal = Path.GetFileName(arquivos[i]);
+
+            Console.WriteLine($"{i + 1:D3}. {nomeOriginal}");
+        }
+    }
+
     static void RenomearArquivos(string pasta)
     {
         var arquivos = Directory.GetFiles(pasta)
-            .OrderBy(f => f)
+                            .Where(f => Path.GetFileName(f) != LOG_FILE)
+            .OrderBy(f => {
+                string nome = Path.GetFileNameWithoutExtension(f); var match = System.Text.RegularExpressions.Regex.Match(nome, @"\d+");
+                return match.Success ? int.Parse(match.Value) : 0;
+            })
             .ToArray();
 
         if (arquivos.Length == 0)
@@ -69,6 +103,7 @@ class Program
         {
             string nomeOriginal = Path.GetFileName(arquivos[i]);
             string nomeBase = Path.GetFileNameWithoutExtension(arquivos[i]);
+            nomeBase = System.Text.RegularExpressions.Regex.Replace(nomeBase, @"\d+$", "").Trim();
             string extensao = Path.GetExtension(arquivos[i]);
             string numero = (i + 1).ToString($"D{digits}");
             string novoNome = $"{nomeBase}{numero}{extensao}";
